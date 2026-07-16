@@ -8,8 +8,10 @@ def extract_answer(response: str) -> dict:
 
     patterns = [
         r"FINAL ANSWER\s*:\s*([ABCD])",
-        r"FINAL ANSWER\s*:\s*([ABCD])\.",
-        r"FINAL ANSWER\s*:\s*([ABCD])\b",
+        r"Final Answer\s*:\s*([ABCD])",
+        r"Answer\s*:\s*([ABCD])",
+        r"The answer is\s*([ABCD])",
+        r"correct answer is\s*([ABCD])",
     ]
 
     for pattern in patterns:
