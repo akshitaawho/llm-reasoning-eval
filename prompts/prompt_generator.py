@@ -1,136 +1,72 @@
 import json
-import argparse
-from collections import Counter
 
-from experiments.runner import ModelRunner
-from parser.answer_parser import extract_answer
-from prompts.prompt_generator import (
-    generate_cot_prompt,
-    generate_self_consistency_prompt,
-)
 
-parser = argparse.ArgumentParser()
+def _build_base_prompt(sample):
+    prompt = f"""You are an expert medical reasoning assistant.
 
-parser.add_argument("--model-name", required=True)
-parser.add_argument("--model-path", required=True)
-parser.add_argument("--prompt", default="cot")
-parser.add_argument("--samples", type=int, default=10)
+Answer the following multiple-choice question.
 
-args = parser.parse_args()
+Question:
+{sample["question"]}
 
-DATASET_PATH = "data/unified/medmcqa.jsonl"
+Options:
+"""
 
-runner = ModelRunner(args.model_path)
+    for label, option in sample["options"].items():
+        prompt += f"{label}. {option}\n"
 
-results = []
+    return prompt
 
-with open(DATASET_PATH, "r", encoding="utf-8") as f:
 
-    for i, line in enumerate(f):
+def generate_cot_prompt(sample):
+    prompt = _build_base_prompt(sample)
 
-        if i == args.samples:
-            break
+    prompt += """
 
-        sample = json.loads(line)
+Think step by step before answering.
 
-        if args.prompt == "cot":
-            prompt = generate_cot_prompt(sample)
-        elif args.prompt == "self_consistency":
-            prompt = generate_self_consistency_prompt(sample)
-        else:
-            raise ValueError(f"Unknown prompt type: {args.prompt}")
+Return ONLY the final answer on the last line.
 
-        if args.prompt == "cot":
+The last line must be EXACTLY one of:
 
-            response = runner.generate(prompt)
+FINAL ANSWER: A
+FINAL ANSWER: B
+FINAL ANSWER: C
+FINAL ANSWER: D
 
-            parsed = extract_answer(response)
+Do not write "<OPTION>".
+Do not add any text after the final answer.
+"""
 
-            responses = [response]
-            parsed_answers = [parsed["answer"]]
+    return prompt
 
-        else:
 
-            responses = []
-            parsed_answers = []
+def generate_self_consistency_prompt(sample):
+    prompt = _build_base_prompt(sample)
 
-            for _ in range(5):
+    prompt += """
 
-                response = runner.generate(
-                    prompt,
-                    do_sample=True,
-                    temperature=0.7,
-                )
+Think step by step before answering.
 
-                responses.append(response)
+Return ONLY the final answer on the last line.
 
-                parsed = extract_answer(response)
+The last line must be EXACTLY one of:
 
-                parsed_answers.append(parsed["answer"])
+FINAL ANSWER: A
+FINAL ANSWER: B
+FINAL ANSWER: C
+FINAL ANSWER: D
 
-            valid_answers = [
-                a for a in parsed_answers
-                if a is not None
-            ]
+Do not write "<OPTION>".
+Do not add any text after the final answer.
+"""
 
-            if valid_answers:
+    return prompt
 
-                counts = Counter(valid_answers)
-                most_common = counts.most_common()
 
-                if (
-                    len(most_common) > 1
-                    and most_common[0][1] == most_common[1][1]
-                ):
-                    parsed = {
-                        "answer": None,
-                        "success": False,
-                    }
-                else:
-                    parsed = {
-                        "answer": most_common[0][0],
-                        "success": True,
-                    }
+if __name__ == "__main__":
 
-            else:
+    with open("data/unified/medmcqa.jsonl", encoding="utf-8") as f:
+        sample = json.loads(next(f))
 
-                parsed = {
-                    "answer": None,
-                    "success": False,
-                }
-
-        result = {
-            "id": sample["id"],
-            "model": args.model_name,
-            "prompt_type": args.prompt,
-            "ground_truth": sample["correct_answer"],
-            "predicted": parsed["answer"],
-            "success": parsed["success"],
-            "correct": parsed["answer"] == sample["correct_answer"],
-            "responses": responses,
-            "parsed_answers": parsed_answers,
-        }
-
-        results.append(result)
-
-        print(
-            f"{i+1}/{args.samples} | "
-            f"GT={result['ground_truth']} | "
-            f"Pred={result['predicted']} | "
-            f"Correct={result['correct']}"
-        )
-
-print()
-
-accuracy = sum(r["correct"] for r in results) / len(results)
-
-print(f"Accuracy: {accuracy:.2%}")
-
-output_path = f"data/responses/{args.model_name}_{args.prompt}.jsonl"
-
-with open(output_path, "w", encoding="utf-8") as f:
-
-    for row in results:
-        f.write(json.dumps(row) + "\n")
-
-print(f"Saved results to {output_path}")
+    print(generate_cot_prompt(sample))
