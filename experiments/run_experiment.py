@@ -1,18 +1,22 @@
 import json
+import argparse
 
 from experiments.runner import ModelRunner
 from parser.answer_parser import extract_answer
 from prompts.prompt_generator import generate_prompt
 
-MODEL_PATH = "/media/nas_mount/research3/llm-models/phi4-mini-instruct"
+parser = argparse.ArgumentParser()
+
+parser.add_argument("--model-name", required=True)
+parser.add_argument("--model-path", required=True)
+parser.add_argument("--prompt", default="cot")
+parser.add_argument("--samples", type=int, default=10)
+
+args = parser.parse_args()
+
 DATASET_PATH = "data/unified/medmcqa.jsonl"
-OUTPUT_PATH = "data/responses/phi4_cot.jsonl"
 
-NUM_SAMPLES = 10
-PROMPT_TYPE = "cot"
-MODEL_NAME = "phi4-mini"
-
-runner = ModelRunner(MODEL_PATH)
+runner = ModelRunner(args.model_path)
 
 results = []
 
@@ -20,7 +24,7 @@ with open(DATASET_PATH, "r", encoding="utf-8") as f:
 
     for i, line in enumerate(f):
 
-        if i == NUM_SAMPLES:
+        if i == args.samples:
             break
 
         sample = json.loads(line)
@@ -33,8 +37,8 @@ with open(DATASET_PATH, "r", encoding="utf-8") as f:
 
         result = {
             "id": sample["id"],
-            "model": MODEL_NAME,
-            "prompt_type": PROMPT_TYPE,
+            "model": args.model_name,
+            "prompt_type": args.prompt,
             "ground_truth": sample["correct_answer"],
             "predicted": parsed["answer"],
             "success": parsed["success"],
@@ -57,7 +61,7 @@ accuracy = sum(r["correct"] for r in results) / len(results)
 
 print(f"Accuracy: {accuracy:.2%}")
 
-with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
+with open(f"data/responses/{args.model_name}_{args.prompt}.jsonl", "w", encoding="utf-8") as f:
 
     for row in results:
         f.write(json.dumps(row) + "\n")
