@@ -18,9 +18,17 @@ Options:
 
 Think step by step before answering.
 
-Return your final answer exactly in the format:
+Return ONLY the final answer on the last line.
 
-FINAL ANSWER: <OPTION>
+The last line must be EXACTLY one of:
+
+FINAL ANSWER: A
+FINAL ANSWER: B
+FINAL ANSWER: C
+FINAL ANSWER: D
+
+Do not write "<OPTION>".
+Do not add any text after the final answer.
 """
 
     return prompt
