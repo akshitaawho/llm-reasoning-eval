@@ -1,4 +1,5 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM
+from parser.answer_parser import extract_answer
 import torch
 
 
@@ -70,3 +71,10 @@ if __name__ == "__main__":
     response = runner.generate(prompt)
 
     print(response)
+
+    parsed = extract_answer(response)
+
+    print("\n" + "=" * 80)
+    print("PARSED ANSWER")
+    print("=" * 80)
+    print(parsed)
