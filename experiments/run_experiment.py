@@ -6,6 +6,11 @@ from prompts.prompt_generator import generate_prompt
 
 MODEL_PATH = "/media/nas_mount/research3/llm-models/phi4-mini-instruct"
 DATASET_PATH = "data/unified/medmcqa.jsonl"
+OUTPUT_PATH = "data/responses/phi4_cot.jsonl"
+
+NUM_SAMPLES = 10
+PROMPT_TYPE = "cot"
+MODEL_NAME = "phi4-mini"
 
 runner = ModelRunner(MODEL_PATH)
 
@@ -15,7 +20,7 @@ with open(DATASET_PATH, "r", encoding="utf-8") as f:
 
     for i, line in enumerate(f):
 
-        if i == 10:
+        if i == NUM_SAMPLES:
             break
 
         sample = json.loads(line)
@@ -28,6 +33,8 @@ with open(DATASET_PATH, "r", encoding="utf-8") as f:
 
         result = {
             "id": sample["id"],
+            "model": MODEL_NAME,
+            "prompt_type": PROMPT_TYPE,
             "ground_truth": sample["correct_answer"],
             "predicted": parsed["answer"],
             "success": parsed["success"],
@@ -50,11 +57,7 @@ accuracy = sum(r["correct"] for r in results) / len(results)
 
 print(f"Accuracy: {accuracy:.2%}")
 
-with open(
-    "data/responses/phi4_cot.jsonl",
-    "w",
-    encoding="utf-8",
-) as f:
+with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
 
     for row in results:
         f.write(json.dumps(row) + "\n")
