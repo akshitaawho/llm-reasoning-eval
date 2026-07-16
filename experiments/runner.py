@@ -22,7 +22,7 @@ class ModelRunner:
     def generate(
         self,
         prompt: str,
-        max_new_tokens: int = 256,
+        max_new_tokens=1024,
         temperature: float = 0.0,
     ) -> str:
 
