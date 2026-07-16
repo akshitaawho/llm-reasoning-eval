@@ -1,5 +1,6 @@
 import json
 import argparse
+from collections import Counter
 
 from experiments.runner import ModelRunner
 from parser.answer_parser import extract_answer
@@ -39,9 +40,49 @@ with open(DATASET_PATH, "r", encoding="utf-8") as f:
         else:
             raise ValueError(f"Unknown prompt type: {args.prompt}")
 
-        response = runner.generate(prompt)
+        if args.prompt == "cot":
 
-        parsed = extract_answer(response)
+            response = runner.generate(prompt)
+
+            parsed = extract_answer(response)
+
+        else:
+
+            responses = []
+            answers = []
+
+            for _ in range(5):
+
+                response = runner.generate(
+                    prompt,
+                    do_sample=True,
+                    temperature=0.7,
+                )
+
+                responses.append(response)
+
+                parsed = extract_answer(response)
+
+                if parsed["success"]:
+                    answers.append(parsed["answer"])
+
+            if answers:
+
+                majority = Counter(answers).most_common(1)[0][0]
+
+                parsed = {
+                    "answer": majority,
+                    "success": True,
+                }
+
+            else:
+
+                parsed = {
+                    "answer": None,
+                    "success": False,
+                }
+
+            response = "\n\n====================\n\n".join(responses)
 
         result = {
             "id": sample["id"],
@@ -57,7 +98,7 @@ with open(DATASET_PATH, "r", encoding="utf-8") as f:
         results.append(result)
 
         print(
-            f"{i+1}/10 | "
+            f"{i+1}/{args.samples} | "
             f"GT={result['ground_truth']} | "
             f"Pred={result['predicted']} | "
             f"Correct={result['correct']}"
@@ -69,7 +110,11 @@ accuracy = sum(r["correct"] for r in results) / len(results)
 
 print(f"Accuracy: {accuracy:.2%}")
 
-with open(f"data/responses/{args.model_name}_{args.prompt}.jsonl", "w", encoding="utf-8") as f:
+with open(
+    f"data/responses/{args.model_name}_{args.prompt}.jsonl",
+    "w",
+    encoding="utf-8",
+) as f:
 
     for row in results:
         f.write(json.dumps(row) + "\n")
