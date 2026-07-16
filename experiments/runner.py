@@ -46,11 +46,26 @@ class ModelRunner:
 
 if __name__ == "__main__":
 
+    import json
+    from prompts.prompt_generator import generate_prompt
+
     MODEL_PATH = "/media/nas_mount/research3/llm-models/phi4-mini-instruct"
 
     runner = ModelRunner(MODEL_PATH)
 
-    prompt = "What is the capital of France?\nFINAL ANSWER:"
+    with open("data/unified/medmcqa.jsonl", "r", encoding="utf-8") as f:
+        sample = json.loads(next(f))
+
+    prompt = generate_prompt(sample)
+
+    print("=" * 80)
+    print("PROMPT")
+    print("=" * 80)
+    print(prompt)
+
+    print("\n" + "=" * 80)
+    print("MODEL RESPONSE")
+    print("=" * 80)
 
     response = runner.generate(prompt)
 
