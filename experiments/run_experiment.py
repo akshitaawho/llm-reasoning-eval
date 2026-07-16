@@ -3,7 +3,10 @@ import argparse
 
 from experiments.runner import ModelRunner
 from parser.answer_parser import extract_answer
-from prompts.prompt_generator import generate_prompt
+from prompts.prompt_generator import (
+    generate_cot_prompt,
+    generate_self_consistency_prompt,
+)
 
 parser = argparse.ArgumentParser()
 
@@ -29,7 +32,12 @@ with open(DATASET_PATH, "r", encoding="utf-8") as f:
 
         sample = json.loads(line)
 
-        prompt = generate_prompt(sample)
+        if args.prompt == "cot":
+            prompt = generate_cot_prompt(sample)
+        elif args.prompt == "self_consistency":
+            prompt = generate_self_consistency_prompt(sample)
+        else:
+            raise ValueError(f"Unknown prompt type: {args.prompt}")
 
         response = runner.generate(prompt)
 
