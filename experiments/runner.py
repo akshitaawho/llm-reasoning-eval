@@ -23,18 +23,29 @@ class ModelRunner:
     def generate(
         self,
         prompt: str,
-        max_new_tokens=1024,
+        max_new_tokens: int = 1024,
         temperature: float = 0.0,
+        do_sample: bool = False,
     ) -> str:
 
-        inputs = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
+        inputs = self.tokenizer(
+            prompt,
+            return_tensors="pt",
+        ).to(self.model.device)
+
+        generation_kwargs = {
+            "max_new_tokens": max_new_tokens,
+            "do_sample": do_sample,
+            "pad_token_id": self.tokenizer.eos_token_id,
+        }
+
+        if do_sample:
+            generation_kwargs["temperature"] = temperature
+            generation_kwargs["top_p"] = 0.9
 
         outputs = self.model.generate(
             **inputs,
-            max_new_tokens=max_new_tokens,
-            temperature=temperature,
-            do_sample=False,
-            pad_token_id=self.tokenizer.eos_token_id,
+            **generation_kwargs,
         )
 
         generated = outputs[0][inputs["input_ids"].shape[1]:]
@@ -48,7 +59,7 @@ class ModelRunner:
 if __name__ == "__main__":
 
     import json
-    from prompts.prompt_generator import generate_prompt
+    from prompts.prompt_generator import generate_cot_prompt
 
     MODEL_PATH = "/media/nas_mount/research3/llm-models/phi4-mini-instruct"
 
@@ -57,7 +68,7 @@ if __name__ == "__main__":
     with open("data/unified/medmcqa.jsonl", "r", encoding="utf-8") as f:
         sample = json.loads(next(f))
 
-    prompt = generate_prompt(sample)
+    prompt = generate_cot_prompt(sample)
 
     print("=" * 80)
     print("PROMPT")
