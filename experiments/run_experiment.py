@@ -55,6 +55,17 @@ with open(DATASET_PATH, "r", encoding="utf-8") as f:
 
             response = runner.generate(prompt)
 
+            print("\n" + "=" * 80)
+            print("PROMPT")
+            print("=" * 80)
+            print(prompt)
+
+            print("\n" + "=" * 80)
+            print("RAW RESPONSE")
+            print("=" * 80)
+            print(response)
+            print("=" * 80 + "\n")
+
             parsed = extract_answer(response)
 
         else:
@@ -71,6 +82,12 @@ with open(DATASET_PATH, "r", encoding="utf-8") as f:
                 )
 
                 responses.append(response)
+
+                print("\n" + "=" * 80)
+                print("RAW RESPONSE")
+                print("=" * 80)
+                print(response)
+                print("=" * 80 + "\n")
 
                 parsed = extract_answer(response)
 
