@@ -10,6 +10,8 @@ class ModelRunner:
             trust_remote_code=True,
         )
 
+        self.tokenizer = self.llm.get_tokenizer()
+
         print("Model loaded.\n")
 
     def generate(
@@ -25,6 +27,14 @@ class ModelRunner:
             temperature=temperature if do_sample else 0.0,
             top_p=0.9 if do_sample else 1.0,
         )
+
+        # Apply chat template for instruct/chat models
+        if getattr(self.tokenizer, "chat_template", None):
+            prompt = self.tokenizer.apply_chat_template(
+                [{"role": "user", "content": prompt}],
+                tokenize=False,
+                add_generation_prompt=True,
+            )
 
         outputs = self.llm.generate(
             [prompt],
