@@ -30,7 +30,6 @@ FINAL ANSWER: B
 FINAL ANSWER: C
 FINAL ANSWER: D
 
-Do not write "<OPTION>".
 Do not add any text after the final answer.
 """
 
@@ -51,40 +50,43 @@ Think step by step before answering.
 def generate_few_shot_prompt(sample):
     prompt = """You are an expert medical reasoning assistant.
 
-Here are two examples.
+Here are two solved examples.
 
 Example 1
 
 Question:
-Which vitamin deficiency causes scurvy?
+Vitamin C deficiency causes which disease?
 
 Options:
-A. Vitamin A
-B. Vitamin C
-C. Vitamin D
-D. Vitamin K
+A. Rickets
+B. Pellagra
+C. Scurvy
+D. Beriberi
 
 Reasoning:
-Scurvy results from Vitamin C deficiency.
+Vitamin C deficiency leads to defective collagen synthesis, resulting in scurvy.
 
-FINAL ANSWER: B
+FINAL ANSWER: C
 
 
 Example 2
 
 Question:
-Which organ produces insulin?
+Insulin is secreted by which organ?
 
 Options:
 A. Liver
-B. Kidney
-C. Pancreas
+B. Pancreas
+C. Kidney
 D. Spleen
 
 Reasoning:
-Insulin is produced by the pancreas.
+Insulin is produced by the beta cells of the pancreas.
 
-FINAL ANSWER: C
+FINAL ANSWER: B
+
+
+Now answer the next question.
 
 """
 
@@ -102,6 +104,7 @@ Think step by step before answering.
 
 def generate_role_prompt(sample):
     prompt = """You are an experienced physician and medical educator.
+
 Carefully analyze the medical concepts before selecting the correct answer.
 
 """
@@ -125,7 +128,7 @@ def generate_contrastive_prompt(sample):
 
 Think step by step.
 
-Before selecting the final answer, briefly consider why the other options are incorrect.
+Before selecting the final answer, briefly explain why the incorrect options are less appropriate.
 
 """
 
@@ -139,7 +142,7 @@ def generate_step_back_prompt(sample):
 
     prompt += """
 
-First identify the underlying medical concept required to solve the question.
+First identify the underlying medical concept needed to solve the question.
 
 Then use that concept to determine the correct answer.
 
@@ -161,4 +164,4 @@ if __name__ == "__main__":
     with open("data/unified/medmcqa.jsonl", encoding="utf-8") as f:
         sample = json.loads(next(f))
 
-    print(generate_cot_prompt(sample))
+    print(generate_few_shot_prompt(sample))
