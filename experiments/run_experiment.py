@@ -7,6 +7,10 @@ from parser.answer_parser import extract_answer
 from prompts.prompt_generator import (
     generate_cot_prompt,
     generate_self_consistency_prompt,
+    generate_few_shot_prompt,
+    generate_role_prompt,
+    generate_contrastive_prompt,
+    generate_step_back_prompt,
 )
 
 parser = argparse.ArgumentParser()
@@ -19,6 +23,18 @@ parser.add_argument("--samples", type=int, default=10)
 args = parser.parse_args()
 
 DATASET_PATH = "data/unified/medmcqa.jsonl"
+
+PROMPT_GENERATORS = {
+    "cot": generate_cot_prompt,
+    "fewshot": generate_few_shot_prompt,
+    "role": generate_role_prompt,
+    "contrastive": generate_contrastive_prompt,
+    "stepback": generate_step_back_prompt,
+    "self_consistency": generate_self_consistency_prompt,
+}
+
+if args.prompt not in PROMPT_GENERATORS:
+    raise ValueError(f"Unknown prompt type: {args.prompt}")
 
 runner = ModelRunner(args.model_path)
 
@@ -33,14 +49,9 @@ with open(DATASET_PATH, "r", encoding="utf-8") as f:
 
         sample = json.loads(line)
 
-        if args.prompt == "cot":
-            prompt = generate_cot_prompt(sample)
-        elif args.prompt == "self_consistency":
-            prompt = generate_self_consistency_prompt(sample)
-        else:
-            raise ValueError(f"Unknown prompt type: {args.prompt}")
+        prompt = PROMPT_GENERATORS[args.prompt](sample)
 
-        if args.prompt == "cot":
+        if args.prompt != "self_consistency":
 
             response = runner.generate(prompt)
 
