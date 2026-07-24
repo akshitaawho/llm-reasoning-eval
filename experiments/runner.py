@@ -15,7 +15,7 @@ class ModelRunner:
     def generate(
         self,
         prompt: str,
-        max_new_tokens: int = 32,
+        max_new_tokens: int = 256,
         temperature: float = 0.0,
         do_sample: bool = False,
     ) -> str:
