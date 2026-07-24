@@ -1,25 +1,17 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM
-from parser.answer_parser import extract_answer
-import torch
+from vllm import LLM, SamplingParams
 
 
 class ModelRunner:
     def __init__(self, model_path: str):
         print(f"Loading model from {model_path}...")
 
-        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
-
-        self.model = AutoModelForCausalLM.from_pretrained(
-            model_path,
-            dtype=torch.bfloat16,
-            device_map="auto",
-            attn_implementation="eager",
+        self.llm = LLM(
+            model=model_path,
+            trust_remote_code=True,
         )
 
-        self.model.eval()
         print("Model loaded.\n")
 
-    @torch.no_grad()
     def generate(
         self,
         prompt: str,
@@ -28,40 +20,27 @@ class ModelRunner:
         do_sample: bool = False,
     ) -> str:
 
-        inputs = self.tokenizer(
-            prompt,
-            return_tensors="pt",
-        ).to(self.model.device)
-
-        generation_kwargs = {
-            "max_new_tokens": max_new_tokens,
-            "do_sample": do_sample,
-            "pad_token_id": self.tokenizer.eos_token_id,
-        }
-
-        if do_sample:
-            generation_kwargs["temperature"] = temperature
-            generation_kwargs["top_p"] = 0.9
-
-        outputs = self.model.generate(
-            **inputs,
-            **generation_kwargs,
+        sampling_params = SamplingParams(
+            max_tokens=max_new_tokens,
+            temperature=temperature if do_sample else 0.0,
+            top_p=0.9 if do_sample else 1.0,
         )
 
-        generated = outputs[0][inputs["input_ids"].shape[1]:]
+        outputs = self.llm.generate(
+            [prompt],
+            sampling_params,
+        )
 
-        return self.tokenizer.decode(
-            generated,
-            skip_special_tokens=True,
-        ).strip()
+        return outputs[0].outputs[0].text.strip()
 
 
 if __name__ == "__main__":
 
     import json
+    from parser.answer_parser import extract_answer
     from prompts.prompt_generator import generate_cot_prompt
 
-    MODEL_PATH = "/media/nas_mount/research3/llm-models/phi4-mini-instruct"
+    MODEL_PATH = "/media/nas_mount/research3/dheeraj/checkpoints/Llama-3.1-8B-Instruct-awq-w4a16-asym-g128"
 
     runner = ModelRunner(MODEL_PATH)
 
