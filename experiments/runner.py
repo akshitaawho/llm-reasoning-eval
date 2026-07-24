@@ -24,6 +24,7 @@ class ModelRunner:
             max_tokens=max_new_tokens,
             temperature=temperature if do_sample else 0.0,
             top_p=0.9 if do_sample else 1.0,
+            stop=["\n\n"],
         )
 
         outputs = self.llm.generate(
