@@ -36,35 +36,15 @@ class ModelRunner:
 
 if __name__ == "__main__":
 
-    import json
-    from parser.answer_parser import extract_answer
-    from prompts.prompt_generator import generate_cot_prompt
-
-    MODEL_PATH = "/media/nas_mount/research3/dheeraj/checkpoints/Llama-3.1-8B-Instruct-awq-w4a16-asym-g128"
+    MODEL_PATH = "/media/nas_mount/research3/dheeraj/checkpoints/Ministral-8B-Instruct-2410-awq-w4a16-asym-g128"
 
     runner = ModelRunner(MODEL_PATH)
 
-    with open("data/unified/medmcqa.jsonl", "r", encoding="utf-8") as f:
-        sample = json.loads(next(f))
-
-    prompt = generate_cot_prompt(sample)
+    response = runner.generate(
+        "What is 2 + 2? Answer in one sentence."
+    )
 
     print("=" * 80)
-    print("PROMPT")
-    print("=" * 80)
-    print(prompt)
-
-    print("\n" + "=" * 80)
     print("MODEL RESPONSE")
     print("=" * 80)
-
-    response = runner.generate(prompt)
-
     print(response)
-
-    parsed = extract_answer(response)
-
-    print("\n" + "=" * 80)
-    print("PARSED ANSWER")
-    print("=" * 80)
-    print(parsed)
